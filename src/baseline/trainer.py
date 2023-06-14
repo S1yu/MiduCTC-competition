@@ -51,8 +51,8 @@ class TrainerCtc:
                  amp: Optional[bool] = True,
                  ddp_nodes_num: Optional[int] = 1,
                  ddp_local_rank: Optional[int] = -1,
-                 n_fold: int = 10,
-                 fold: int=0,
+                 n_fold: int = 4,
+                 fold: int = 0 ,
                  **kwargs
                  ):
         
@@ -120,10 +120,11 @@ class TrainerCtc:
         self._keep_id_in_ctag = self._ctag2id['$KEEP']
         self.n_fold = n_fold
 
-    @staticmethod
-    def load_texts_from_fp(file_path, n_fold = 10):
+
+
+    def load_texts_from_fp(self,file_path, n_fold = 5):
         trg_texts, src_texts, kfolds = [], [], []
-        kf = KFold(n_splits=n_fold, random_state=42, shuffle=True)
+        kf = KFold(n_splits=4, random_state=42, shuffle=True)
         if '.txt' in file_path:
             for line in open(file_path, 'r', encoding='utf-8'):
                 line = line.strip().split('\t')
@@ -136,7 +137,7 @@ class TrainerCtc:
             df = pd.DataFrame(json_data)
             for fold, (_, val_) in enumerate(kf.split(X=df)):
                 df.loc[val_, "kfold"] = int(fold)
-            df["kfold"] = df["kfold"].astype(int)    
+            df["kfold"] = df["kfold"].astype(int)
             # for line in df:
             #     src_texts.append(df['source'])
             #     trg_texts.append(df['target'])
@@ -162,7 +163,7 @@ class TrainerCtc:
 
         # 加载train-dataset
         df = self.load_texts_from_fp(
-            self.train_fp, self.n_fold)
+            self.train_fp)
         df_train = df[df.kfold != fold].reset_index(drop=True)
         df_dev = df[df.kfold == fold].reset_index(drop=True)
 
@@ -196,12 +197,13 @@ class TrainerCtc:
         #         train_ds, [_train_size, _dev_size])
 
         if self.test_fp is not None:
-            test_src_texts, test_trg_texts = self.load_texts_from_fp(
-                self.test_fp)
+            df_test= self.load_texts_from_fp(
+                self.test_fp,self.n_fold)
+
             test_ds = DatasetCTC(
                 in_model_dir=self.in_model_dir,
-                src_texts=test_src_texts,
-                trg_texts=test_trg_texts,
+                src_texts=df_test['source'].tolist(),
+                trg_texts=df_test['target'].tolist(),
                 max_seq_len=self.max_seq_len,
             )
 
@@ -353,7 +355,7 @@ class TrainerCtc:
                 step += 1
 
                 # 训练过程可能有些许数据出错，跳过
-                try:
+                try:# 训练过程
                     batch_c_loss, batch_gold, batch_pred = self.train_step(
                         batch_ds, return_for_epoch_metric=self.with_train_epoch_metric)
                 except RuntimeError as e:
@@ -604,3 +606,22 @@ class TrainerCtc:
             src_texts=[epoch_src], trg_texts=[epoch_gold_labels], pred_texts=[epoch_preds])
 
         return epoch_loss, c_precision, c_recall, c_f1
+if __name__ == '__main__':
+    config = {
+        "out_model_dir":"./",
+        'in_model_dir':"hfl/chinese-macbert-base",
+        "learning_rate":4e-5,
+        "max_seq_len":256,
+        "train_fp":'D:\project\working\XF\data\example_input.json',
+        "dev_fp":'D:\project\working\XF\data\example_input.json',
+        "test_fp":'D:\project\working\XF\data\example_input.json',
+        "batch_size":4,
+        "random_seed_num":42,
+        "early_stop_times":1,
+        "freeze_embedding":1,
+        "max_grad_norm":1,
+        "dev_data_ratio":1,
+        "n_fold":4,
+        "with_train_epoch_metric":1,
+    }
+    TrainerCtc(epochs=1,**config,).load_texts_from_fp("D:\project\working\XF\data\example_input.json")

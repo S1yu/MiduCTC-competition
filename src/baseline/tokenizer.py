@@ -605,7 +605,9 @@ class WordpieceTokenizer(object):
 
 if __name__ == '__main__':
 
-    model_dir = 'pretrained_model/chinese-roberta-wwm-ext'
+    #model_dir = 'pretrained_model/chinese-roberta-wwm-ext'
+    model_dir = 'hfl/chinese-macbert-base'
     tokenizer = CtcTokenizer.from_pretrained(model_dir)
     inputs = tokenizer(['撒打算大阿斯顿', '撒打算大'], max_len=128)
     print(inputs)
+

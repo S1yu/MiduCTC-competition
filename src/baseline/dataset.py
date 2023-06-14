@@ -3,7 +3,6 @@ from difflib import SequenceMatcher
 from typing import Dict, List
 
 import torch
-from src import logger
 from src.baseline.tokenizer import CtcTokenizer
 from torch.utils.data import Dataset
 
@@ -15,7 +14,7 @@ class DatasetCTC(Dataset):
                  src_texts: List[str],
                  trg_texts: List[str],
                  max_seq_len: int = 128,
-                 ctc_label_vocab_dir: str = 'src/baseline/ctc_vocab',
+                 ctc_label_vocab_dir: str = './src/baseline/ctc_vocab',
                  _loss_ignore_id: int = -100
                  ):
         """
@@ -24,16 +23,16 @@ class DatasetCTC(Dataset):
         :param ctc_label_vocab_dir: ctc任务的文件夹路径， 包含d_tags.txt和labels.txt
         :param keep_one_append:多个操作型label保留一个
         """
-        super(DatasetCTC, self).__init__()
+        super(DatasetCTC, self).__init__()  # dataset 入口
 
         assert len(src_texts) == len(
             trg_texts), 'keep equal length between srcs and trgs'
         self.src_texts = src_texts
         self.trg_texts = trg_texts
-        self.tokenizer = CtcTokenizer.from_pretrained(in_model_dir)
+        from  transformers import AutoTokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')#CtcTokenizer.from_pretrained(in_model_dir)AutoTokenizer.from_pretrained('bert-base-uncased')
         self.max_seq_len = max_seq_len
-        self.id2dtag, self.dtag2id, self.id2ctag, self.ctag2id = self.load_label_dict(
-            ctc_label_vocab_dir)
+        self.id2dtag, self.dtag2id, self.id2ctag, self.ctag2id = self.load_label_dict()
 
         self.dtag_num = len(self.dtag2id)
 
@@ -53,16 +52,16 @@ class DatasetCTC(Dataset):
         # loss ignore id
         self._loss_ignore_id = _loss_ignore_id
 
-    def load_label_dict(self, ctc_label_vocab_dir: str):
-        dtag_fp = os.path.join(ctc_label_vocab_dir, 'ctc_detect_tags.txt')
-        ctag_fp = os.path.join(ctc_label_vocab_dir, 'ctc_correct_tags.txt')
+    def load_label_dict(self):
+        dtag_fp = r'C:\\Users\yangsiyu\DataspellProjects\MiduCTC-competition\src//baseline\ctc_vocab\ctc_detect_tags.txt'
+        ctag_fp = r'C:\\Users\yangsiyu\DataspellProjects\MiduCTC-competition\src//baseline\ctc_vocab\ctc_correct_tags.txt'
 
         id2dtag = [line.strip() for line in open(dtag_fp, encoding='utf8')]
         d_tag2id = {v: i for i, v in enumerate(id2dtag)}
 
         id2ctag = [line.strip() for line in open(ctag_fp, encoding='utf8')]
         c_tag2id = {v: i for i, v in enumerate(id2ctag)}
-        logger.info('d_tag num: {}, d_tags:{}'.format(len(id2dtag), d_tag2id))
+        #logger.info('d_tag num: {}, d_tags:{}'.format(len(id2dtag), d_tag2id))
         return id2dtag, d_tag2id, id2ctag, c_tag2id
 
     @staticmethod

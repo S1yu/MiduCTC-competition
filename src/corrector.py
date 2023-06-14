@@ -27,4 +27,11 @@ class Corrector:
             texts = pred_texts
         return pred_texts
 
-    
+if __name__ == '__main__':
+
+    train_ds = DatasetCTC(
+        in_model_dir=self.in_model_dir,
+        src_texts=df_train["source"].tolist(),
+        trg_texts=df_train["target"].tolist(),
+        max_seq_len=self.max_seq_len,
+    )
