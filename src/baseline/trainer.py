@@ -47,7 +47,7 @@ class TrainerCtc:
                  with_train_epoch_metric: bool = False,
                  training_mode: str = 'normal',
                  loss_ignore_id = -100,
-                 ctc_label_vocab_dir: str = 'src/baseline/ctc_vocab',
+                 ctc_label_vocab_dir: str = './baseline/ctc_vocab',
                  amp: Optional[bool] = True,
                  ddp_nodes_num: Optional[int] = 1,
                  ddp_local_rank: Optional[int] = -1,
@@ -88,7 +88,7 @@ class TrainerCtc:
         self.train_fp = train_fp
         self.dev_fp = dev_fp
         self.test_fp = test_fp
-        self.ctc_label_vocab_dir = ctc_label_vocab_dir
+        self.ctc_label_vocab_dir = './ctc_vocab'
         self.check_val_every_n_epoch = check_val_every_n_epoch
         self.early_stop_times = early_stop_times
         self.dev_data_ratio = dev_data_ratio
@@ -147,8 +147,8 @@ class TrainerCtc:
         return df
 
     def load_label_vocab(self):
-        dtag_fp = os.path.join(self.ctc_label_vocab_dir, 'ctc_detect_tags.txt')
-        ctag_fp = os.path.join(self.ctc_label_vocab_dir,
+        dtag_fp = os.path.join('./ctc_vocab', 'ctc_detect_tags.txt')
+        ctag_fp = os.path.join('./ctc_vocab',
                                'ctc_correct_tags.txt')
 
         id2dtag = [line.strip() for line in open(dtag_fp, encoding='utf8')]
@@ -624,4 +624,5 @@ if __name__ == '__main__':
         "n_fold":4,
         "with_train_epoch_metric":1,
     }
-    TrainerCtc(epochs=1,**config,).load_texts_from_fp("D:\project\working\XF\data\example_input.json")
+    T = TrainerCtc(epochs=1,**config,).load_texts_from_fp("D:\project\working\XF\data\example_input.json")
+    T.train
